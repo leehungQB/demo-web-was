@@ -18,9 +18,42 @@ const poolConfig = {
   max: 10 // Thích hợp cho EC2 tài nguyên thấp (2 core, 2GB RAM)
 };
 
-// Cấu hình SSL nếu cần cho AWS RDS
-if (process.env.DB_SSL === 'true') {
-  poolConfig.ssl = { rejectUnauthorized: false };
+const fs = require('fs');
+const path = require('path');
+
+// Cấu hình SSL cho PostgreSQL AWS RDS
+// RDS yêu cầu kết nối mã hóa (SSL). Nếu không có SSL sẽ gặp lỗi: "no pg_hba.conf entry ... no encryption"
+const isRdsHost = poolConfig.host.includes('rds.amazonaws.com');
+const enableSsl = process.env.DB_SSL === 'true' || (process.env.DB_SSL !== 'false' && isRdsHost);
+
+if (enableSsl) {
+  // Tìm đường dẫn file chứng chỉ CA (global-bundle.pem)
+  const candidatePaths = [
+    process.env.DB_CA_CERT_PATH,
+    path.join(__dirname, 'key-rds/global-bundle.pem'),
+    path.join(__dirname, '../key-rds/global-bundle.pem'),
+    path.join(process.cwd(), 'key-rds/global-bundle.pem'),
+    path.join(process.env.HOME || '', 'key-rds/global-bundle.pem')
+  ].filter(Boolean);
+
+  const foundCaPath = candidatePaths.find(p => fs.existsSync(p));
+
+  if (foundCaPath) {
+    try {
+      console.log(`🔒 Sử dụng Root CA certificate từ: ${foundCaPath}`);
+      poolConfig.ssl = {
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+        ca: fs.readFileSync(foundCaPath).toString()
+      };
+    } catch (readErr) {
+      console.warn(`⚠️ Không thể đọc file CA cert (${foundCaPath}), chuyển sang chế độ SSL không verify cert:`, readErr.message);
+      poolConfig.ssl = { rejectUnauthorized: false };
+    }
+  } else {
+    // Nếu chưa có file certificate, vẫn bật mã hóa SSL để không bị lỗi "no encryption"
+    console.log('🔒 Bật mã hóa SSL kết nối RDS (rejectUnauthorized: false)');
+    poolConfig.ssl = { rejectUnauthorized: false };
+  }
 }
 
 const pool = new Pool(poolConfig);

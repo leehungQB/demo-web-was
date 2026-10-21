@@ -21,8 +21,11 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=<Mật_khẩu_RDS_của_bạn>
 DB_NAME=postgres
-DB_SSL=false
+DB_SSL=true
+DB_CA_CERT_PATH=./key-rds/global-bundle.pem
 ```
+
+> **Lưu ý quan trọng về SSL**: AWS RDS PostgreSQL mặc định yêu cầu kết nối mã hóa SSL (nếu không có sẽ báo lỗi: `no pg_hba.conf entry ... no encryption`). Ứng dụng đã tự động kích hoạt SSL và có sẵn file chứng chỉ `key-rds/global-bundle.pem`.
 
 Hoặc bạn có thể xuất trực tiếp biến môi trường:
 ```bash
