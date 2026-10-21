@@ -8,6 +8,24 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// Tự động đọc file .env nếu có (không cần cài thêm thư viện phụ thuộc)
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envLines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of envLines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx !== -1) {
+        const key = trimmed.slice(0, idx).trim();
+        const val = trimmed.slice(idx + 1).trim().replace(/^['"]|['"]$/g, '');
+        if (!process.env[key]) process.env[key] = val;
+      }
+    }
+  }
+} catch (e) {}
+
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUBLIC_DIR = __dirname;
 
@@ -27,6 +45,31 @@ const server = http.createServer((req, res) => {
   let safePath = path.normalize(req.url.split('?')[0]);
   if (safePath === '/' || safePath === '\\') {
     safePath = '/index.html';
+  }
+
+  // 1. Phục vụ config.js động dựa theo biến môi trường WAS_API_URL trên máy chủ Web
+  if (safePath === '/config.js' && process.env.WAS_API_URL) {
+    const dynamicConfig = `/**
+ * Tự động tạo từ biến môi trường máy chủ (WAS_API_URL)
+ */
+window.APP_CONFIG = {
+  DEFAULT_API_URL: "${process.env.WAS_API_URL.trim().replace(/\/+$/, '')}"
+};
+`;
+    res.writeHead(200, {
+      'Content-Type': 'application/javascript; charset=UTF-8',
+      'Cache-Control': 'no-cache'
+    });
+    return res.end(dynamicConfig);
+  }
+
+  // 2. Endpoint kiểm tra biến môi trường web server
+  if (safePath === '/env.json') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      PORT,
+      WAS_API_URL: process.env.WAS_API_URL || null
+    }));
   }
 
   const filePath = path.join(PUBLIC_DIR, safePath);

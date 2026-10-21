@@ -48,15 +48,38 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-## 3. Cấu hình địa chỉ WAS API
-Có 2 cách:
-1. **Cách 1 (Trực quan)**: Mở trình duyệt vào Web, bấm nút **"Cấu hình WAS"** ở góc phải trên cùng màn hình &rarr; Nhập URL WAS (ví dụ `http://<EC2_WAS_PUBLIC_IP>:5000`) &rarr; Bấm **"Kiểm tra kết nối"** &rarr; Bấm **"Lưu & Áp Dụng"**.
-2. **Cách 2**: Chỉnh sửa file `config.js` trước khi triển khai:
-   ```javascript
-   window.APP_CONFIG = {
-     DEFAULT_API_URL: 'http://<IP_EC2_WAS>:5000'
-   };
-   ```
+## 3. Cấu hình biến môi trường và địa chỉ WAS API
+
+Ứng dụng hỗ trợ **3 cách** linh hoạt để Web nhận địa chỉ WAS API:
+
+### Cách 1 (Khuyên dùng khi chạy Node): Dùng file `.env` hoặc Export biến
+Tạo file `.env` trong thư mục `web/`:
+```bash
+cp .env.example .env
+```
+Nội dung file `web/.env`:
+```env
+PORT=3000
+WAS_API_URL=http://<IP_EC2_WAS>:5000
+```
+Hoặc chạy trực tiếp với biến môi trường:
+```bash
+WAS_API_URL=http://<IP_EC2_WAS>:5000 node server.js
+```
+*(Server Node sẽ tự động inject `WAS_API_URL` này vào trình duyệt khi người dùng truy cập).*
+
+### Cách 2 (Dành cho Nginx hoặc Static Hosting): Sửa file `config.js`
+Chỉnh sửa file `web/config.js`:
+```javascript
+window.APP_CONFIG = {
+  DEFAULT_API_URL: 'http://<IP_EC2_WAS>:5000'
+};
+```
+
+### Cách 3 (Trực quan nhất): Cấu hình trực tiếp trên giao diện Web
+* Mở trình duyệt &rarr; Bấm nút **"Cấu hình WAS"** ở góc trên bên phải màn hình.
+* Nhập URL: `http://<IP_EC2_WAS>:5000` &rarr; Bấm **"Kiểm tra kết nối"** &rarr; Bấm **"Lưu & Áp Dụng"**.
+* Trình duyệt sẽ lưu vào `localStorage` của máy bạn.
 
 ---
 
