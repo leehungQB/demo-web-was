@@ -52,21 +52,21 @@ sudo nginx -t && sudo systemctl reload nginx
 
 Ứng dụng hỗ trợ **3 cách** linh hoạt để Web nhận địa chỉ WAS API:
 
-### Cách 1 (Khuyên dùng khi chạy Node): Dùng file `.env` hoặc Export biến
-Tạo file `.env` trong thư mục `web/`:
+### Cách 1 (Khuyên dùng - Chuẩn 3-Tier bảo mật với IP Private): Dùng Web Server làm Reverse Proxy
+Tạo file `.env` trong thư mục `web/` trên máy EC2 Web:
 ```bash
 cp .env.example .env
 ```
-Nội dung file `web/.env`:
+Nội dung file `web/.env` (nhập IP Private của EC2 WAS):
 ```env
 PORT=3000
-WAS_API_URL=http://<IP_EC2_WAS>:5000
+WAS_API_URL=http://10.0.27.74:5000
 ```
 Hoặc chạy trực tiếp với biến môi trường:
 ```bash
-WAS_API_URL=http://<IP_EC2_WAS>:5000 node server.js
+WAS_API_URL=http://10.0.27.74:5000 node server.js
 ```
-*(Server Node sẽ tự động inject `WAS_API_URL` này vào trình duyệt khi người dùng truy cập).*
+*Web Server sẽ đóng vai trò **Reverse Proxy**: Trình duyệt chỉ cần gọi tới EC2 Web, Web Server sẽ tự động chuyển tiếp request `/api/*` và `/health` sang máy WAS qua IP nội bộ `10.0.27.74:5000` mà không cần public port 5000 ra ngoài Internet.*
 
 ### Cách 2 (Dành cho Nginx hoặc Static Hosting): Sửa file `config.js`
 Chỉnh sửa file `web/config.js`:

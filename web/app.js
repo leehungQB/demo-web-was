@@ -7,14 +7,36 @@
   // 1. Quản lý cấu hình WAS API URL
   const STORAGE_KEY = 'AWS_DEMO_WAS_URL';
   
+  function isPrivateIpUrl(url) {
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') return false;
+      if (host.startsWith('10.')) return true;
+      if (host.startsWith('192.168.')) return true;
+      if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
   function getWasApiUrl() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && saved.trim()) {
-      return saved.trim().replace(/\/+$/, '');
+      const cleanSaved = saved.trim().replace(/\/+$/, '');
+      // Nếu localStorage lưu IP Private nội bộ (10.x, 192.168.x) mà trình duyệt đang mở từ ngoài:
+      // Tự động chuyển sang dùng Web Proxy (window.location.origin) để không bị lỗi Failed to fetch
+      if (isPrivateIpUrl(cleanSaved) && window.location.hostname !== new URL(cleanSaved).hostname) {
+        console.warn(`[Auto-Fix] Bỏ qua IP nội bộ ${cleanSaved} trong localStorage, chuyển sang Web Proxy:`, window.location.origin);
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        return cleanSaved;
+      }
     }
     const defaultUrl = (window.APP_CONFIG && window.APP_CONFIG.DEFAULT_API_URL) 
       ? window.APP_CONFIG.DEFAULT_API_URL 
-      : 'http://localhost:5000';
+      : (typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:5000');
     return defaultUrl.replace(/\/+$/, '');
   }
 
@@ -341,6 +363,10 @@
   // 12. Cấu hình WAS URL Modal
   function updateArchLabel() {
     try {
+      if (!currentApiUrl || currentApiUrl === window.location.origin) {
+        wasIpLabel.textContent = 'Web Proxy 🔀 WAS';
+        return;
+      }
       const parsed = new URL(currentApiUrl);
       wasIpLabel.textContent = `${parsed.hostname}:${parsed.port || '80'}`;
     } catch {
@@ -353,6 +379,15 @@
     healthTestOutput.classList.add('hidden');
     configModal.classList.remove('hidden');
   });
+
+  const btnUseProxy = document.getElementById('btn-use-proxy');
+  if (btnUseProxy) {
+    btnUseProxy.addEventListener('click', () => {
+      configWasUrlInput.value = window.location.origin;
+      showToast('Đã chọn Web Proxy! Đang kiểm tra kết nối...', 'info');
+      btnTestConnection.click();
+    });
+  }
 
   btnCloseConfig.addEventListener('click', () => configModal.classList.add('hidden'));
 
@@ -377,9 +412,14 @@
         `Server Time: ${result.data.database.serverTime}`;
     } else {
       healthTestOutput.className = 'health-box error';
+      let hint = '👉 Kiểm tra lại Security Group port 5000 và tiến trình Node trên EC2 WAS.';
+      if (testUrl.includes('10.') || testUrl.includes('172.') || testUrl.includes('192.168.')) {
+        hint = `⚠️ <strong>Phát hiện IP nội bộ (${testUrl}):</strong><br>` +
+          `Trình duyệt trên máy tính cá nhân KHÔNG THỂ gọi trực tiếp vào IP Private của AWS.<br>` +
+          `👉 Hãy bấm nút <strong>"Dùng Web Proxy"</strong> để Web EC2 (${window.location.origin}) chuyển tiếp yêu cầu đến WAS.`;
+      }
       healthTestOutput.innerHTML = `❌ KẾT NỐI THẤT BẠI!<br>` +
-        `Lỗi: ${result.error || result.message || 'Không thể liên lạc'}<br>` +
-        `👉 Kiểm tra lại Security Group port 5000 và tiến trình Node trên EC2 WAS.`;
+        `Lỗi: ${result.error || result.message || 'Không thể liên lạc'}<br>${hint}`;
     }
   });
 

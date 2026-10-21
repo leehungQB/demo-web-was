@@ -89,21 +89,24 @@ app-web-was/
 ### 2. Cài đặt trên MÁY 2 (EC2 Web - Frontend)
 
 1. **Copy thư mục `web/` sang EC2 Web**
-2. **Khởi động Web server:**
+2. **Cấu hình biến môi trường trỏ tới IP Private của WAS:**
    ```bash
    cd web
+   cp .env.example .env
+   # Mở file .env và điền IP Private của WAS (ví dụ: WAS_API_URL=http://10.0.27.74:5000):
+   nano .env
+   ```
+3. **Khởi động Web server (tự động kích hoạt Reverse Proxy):**
+   ```bash
    # Chạy bằng Node.js thuần (Không cần npm install):
    node server.js
    
    # Hoặc chạy trên port 80 nếu muốn truy cập trực tiếp:
    sudo PORT=80 node server.js
    ```
-3. **Mở trình duyệt:**
-   Truy cập `http://<IP_PUBLIC_EC2_WEB>:3000` (hoặc port 80).
-4. **Kết nối đến WAS:**
-   - Trên giao diện Web, bấm nút **"Cấu hình WAS"** ở góc phải trên.
-   - Nhập URL: `http://<IP_PUBLIC_EC2_WAS>:5000`
-   - Bấm **"Kiểm tra kết nối"** &rarr; Khi hiện đèn xanh báo kết nối thành công, bấm **"Lưu & Áp Dụng"**.
+4. **Mở trình duyệt:**
+   - Truy cập: `http://<IP_PUBLIC_EC2_WEB>:3000` (hoặc port 80).
+   - Web Server sẽ tự động làm Reverse Proxy chuyển tiếp mọi request sang WAS `http://10.0.27.74:5000`. Bạn không cần public IP của WAS ra ngoài Internet!
    - Bắt đầu thực hiện các hành động **Thêm, Sửa, Xóa** dữ liệu trực tiếp vào RDS!
 
 ---

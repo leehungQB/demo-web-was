@@ -202,13 +202,19 @@
 
       <div class="config-modal-body">
         <p class="config-hint">
-          Nhập địa chỉ IP / Domain và port của máy EC2 WAS (Backend).<br>
-          Ví dụ: <code>http://54.255.xx.xx:5000</code> hoặc <code>http://was.internal:5000</code>
+          <strong>Lưu ý về IP:</strong><br>
+          &bull; Nếu máy WAS có <strong>IP Public</strong>: Nhập <code>http://&lt;WAS_PUBLIC_IP&gt;:5000</code>.<br>
+          &bull; Nếu máy WAS dùng <strong>IP nội bộ (10.x.x.x)</strong>: Trình duyệt của bạn sẽ <strong>không thể gọi trực tiếp</strong>. Hãy bấm nút <em>"Dùng Web Proxy"</em> bên dưới để Web EC2 chuyển tiếp thay bạn!
         </p>
 
         <div class="form-group">
           <label for="config-was-url">URL WAS API Backend:</label>
-          <input type="text" id="config-was-url" placeholder="http://13.212.x.x:5000">
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="config-was-url" placeholder="http://54.255.x.x:5000 hoặc /">
+            <button type="button" id="btn-use-proxy" class="btn btn-secondary" style="white-space: nowrap; font-size: 0.8rem;" title="Sử dụng Web Server làm Proxy">
+              Dùng Web Proxy
+            </button>
+          </div>
         </div>
 
         <div id="health-test-output" class="health-box hidden">

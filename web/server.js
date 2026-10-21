@@ -47,13 +47,17 @@ const server = http.createServer((req, res) => {
     safePath = '/index.html';
   }
 
-  // 1. Phục vụ config.js động dựa theo biến môi trường WAS_API_URL trên máy chủ Web
-  if (safePath === '/config.js' && process.env.WAS_API_URL) {
+  // 1. Phục vụ config.js động
+  if (safePath === '/config.js') {
+    const wasTarget = (process.env.WAS_API_URL || '').trim().replace(/\/+$/, '');
     const dynamicConfig = `/**
- * Tự động tạo từ biến môi trường máy chủ (WAS_API_URL)
+ * Cấu hình tự động tạo bởi Web Server
  */
 window.APP_CONFIG = {
-  DEFAULT_API_URL: "${process.env.WAS_API_URL.trim().replace(/\/+$/, '')}"
+  // Mặc định gọi chính Web Server (sử dụng Reverse Proxy để kết nối vào WAS Private IP)
+  DEFAULT_API_URL: window.location.origin,
+  WAS_PROXY_ENABLED: ${wasTarget ? 'true' : 'false'},
+  WAS_TARGET_URL: "${wasTarget}"
 };
 `;
     res.writeHead(200, {
@@ -63,12 +67,28 @@ window.APP_CONFIG = {
     return res.end(dynamicConfig);
   }
 
-  // 2. Endpoint kiểm tra biến môi trường web server
+  // 2. Reverse Proxy các API requests (/api/*, /health, /healthz) sang WAS Private IP
+  const wasTargetUrl = process.env.WAS_API_URL;
+  if (safePath.startsWith('/api/') || safePath === '/health' || safePath === '/healthz' || safePath === '/ping') {
+    if (wasTargetUrl) {
+      return proxyToWas(req, res, wasTargetUrl);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=UTF-8' });
+      return res.end(JSON.stringify({
+        status: 'DOWN',
+        success: false,
+        error: 'Web Server chưa được cấu hình biến môi trường WAS_API_URL trong file .env trên EC2 Web! Vui lòng thêm: WAS_API_URL=http://<WAS_PRIVATE_IP>:5000 vào file web/.env và khởi động lại server.'
+      }));
+    }
+  }
+
+  // 3. Endpoint kiểm tra biến môi trường web server
   if (safePath === '/env.json') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       PORT,
-      WAS_API_URL: process.env.WAS_API_URL || null
+      WAS_API_URL: process.env.WAS_API_URL || null,
+      PROXY_ENABLED: Boolean(process.env.WAS_API_URL)
     }));
   }
 
@@ -108,10 +128,61 @@ window.APP_CONFIG = {
   });
 });
 
+/**
+ * Reverse Proxy request từ Web sang WAS Private IP
+ */
+function proxyToWas(req, res, targetUrl) {
+  try {
+    const parsedTarget = new URL(targetUrl);
+    const isHttps = parsedTarget.protocol === 'https:';
+    const transport = isHttps ? require('https') : require('http');
+
+    const headers = { ...req.headers };
+    headers.host = parsedTarget.host;
+    headers['x-forwarded-for'] = req.socket.remoteAddress || req.headers['x-forwarded-for'] || '';
+    headers['x-forwarded-proto'] = req.socket.encrypted ? 'https' : 'http';
+    headers['x-forwarded-host'] = req.headers.host || '';
+
+    const basePath = parsedTarget.pathname.replace(/\/+$/, '');
+    const proxyPath = basePath ? `${basePath}${req.url}` : req.url;
+
+    const proxyReq = transport.request({
+      protocol: parsedTarget.protocol,
+      hostname: parsedTarget.hostname,
+      port: parsedTarget.port || (isHttps ? 443 : 80),
+      path: proxyPath,
+      method: req.method,
+      headers: headers
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res, { end: true });
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error(`⚠️ [Reverse Proxy] Lỗi kết nối tới WAS (${targetUrl}):`, err.message);
+      res.writeHead(502, { 'Content-Type': 'application/json; charset=UTF-8' });
+      res.end(JSON.stringify({
+        success: false,
+        error: `[Web Proxy] Không thể kết nối tới WAS Backend (${targetUrl}): ${err.message}`
+      }));
+    });
+
+    req.pipe(proxyReq, { end: true });
+  } catch (err) {
+    res.writeHead(500, { 'Content-Type': 'application/json; charset=UTF-8' });
+    res.end(JSON.stringify({ success: false, error: 'Proxy config error: ' + err.message }));
+  }
+}
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`===============================================`);
   console.log(`🌐 WEB Frontend Server đang chạy tại PORT: ${PORT}`);
   console.log(`👉 Truy cập trình duyệt: http://localhost:${PORT}`);
+  if (process.env.WAS_API_URL) {
+    console.log(`🔀 Reverse Proxy kích hoạt: trỏ tới ${process.env.WAS_API_URL}`);
+  } else {
+    console.log(`💡 Mẹo: Bạn có thể cấu hình WAS_API_URL=http://<WAS_PRIVATE_IP>:5000 trong file .env để tự động Reverse Proxy`);
+  }
   console.log(`⚡ Bộ nhớ sử dụng: ~${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB RAM`);
   console.log(`===============================================`);
 });
