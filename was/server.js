@@ -27,26 +27,57 @@ const isRdsHost = poolConfig.host.includes('rds.amazonaws.com');
 const enableSsl = process.env.DB_SSL === 'true' || (process.env.DB_SSL !== 'false' && isRdsHost);
 
 if (enableSsl) {
-  // Tìm đường dẫn file chứng chỉ CA (global-bundle.pem)
+  // Hàm kiểm tra và giải quyết đường dẫn file cert (hỗ trợ cả trường hợp trỏ vào file hoặc trỏ vào thư mục chứa cert)
+  function resolveCertFile(inputPath) {
+    if (!inputPath) return null;
+    try {
+      if (!fs.existsSync(inputPath)) return null;
+      const stat = fs.statSync(inputPath);
+      if (stat.isFile()) return inputPath;
+      if (stat.isDirectory()) {
+        const bundlePath = path.join(inputPath, 'global-bundle.pem');
+        if (fs.existsSync(bundlePath) && fs.statSync(bundlePath).isFile()) {
+          return bundlePath;
+        }
+        const files = fs.readdirSync(inputPath);
+        const pem = files.find(f => f.endsWith('.pem') || f.endsWith('.crt'));
+        if (pem) return path.join(inputPath, pem);
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  // Danh sách các vị trí tiềm năng chứa file chứng chỉ
   const candidatePaths = [
     process.env.DB_CA_CERT_PATH,
+    path.join(__dirname, 'key-rds'),
     path.join(__dirname, 'key-rds/global-bundle.pem'),
-    path.join(__dirname, '../key-rds/global-bundle.pem'),
-    path.join(process.cwd(), 'key-rds/global-bundle.pem'),
-    path.join(process.env.HOME || '', 'key-rds/global-bundle.pem')
+    path.join(__dirname, '../key-rds'),
+    path.join(process.cwd(), 'key-rds'),
+    path.join(process.env.HOME || '', 'key-rds'),
+    path.join(process.env.HOME || '', 'demo-web-was/was/key-rds')
   ].filter(Boolean);
 
-  const foundCaPath = candidatePaths.find(p => fs.existsSync(p));
+  let foundCaFile = null;
+  for (const cand of candidatePaths) {
+    const resolved = resolveCertFile(cand);
+    if (resolved) {
+      foundCaFile = resolved;
+      break;
+    }
+  }
 
-  if (foundCaPath) {
+  if (foundCaFile) {
     try {
-      console.log(`🔒 Sử dụng Root CA certificate từ: ${foundCaPath}`);
+      console.log(`🔒 Sử dụng Root CA certificate từ file: ${foundCaFile}`);
       poolConfig.ssl = {
         rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
-        ca: fs.readFileSync(foundCaPath).toString()
+        ca: fs.readFileSync(foundCaFile).toString()
       };
     } catch (readErr) {
-      console.warn(`⚠️ Không thể đọc file CA cert (${foundCaPath}), chuyển sang chế độ SSL không verify cert:`, readErr.message);
+      console.warn(`⚠️ Lỗi khi đọc file cert (${foundCaFile}):`, readErr.message);
       poolConfig.ssl = { rejectUnauthorized: false };
     }
   } else {
