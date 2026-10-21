@@ -1,0 +1,12 @@
+{
+  "name": "demo-web",
+  "version": "1.0.0",
+  "description": "Ultra-lightweight Web Tier static server for 3-tier AWS Demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["aws", "3-tier", "web", "static"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+# Ví dụ cấu hình Nginx cho EC2 Web Server (/etc/nginx/conf.d/demo-web.conf)
+server {
+    listen 80;
+    server_name _;
+
+    # Thư mục chứa mã nguồn Web
+    root /var/www/demo-web;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # (Tùy chọn) Reverse proxy đến WAS nếu muốn ẩn port 5000:
+    # location /api/ {
+    #     proxy_pass http://<IP_WAS_EC2>:5000/api/;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Real-IP $remote_addr;
+    # }
+    # location /health {
+    #     proxy_pass http://<IP_WAS_EC2>:5000/health;
+    # }
+
+    # Tối ưu cache cho static assets
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1d;
+        add_header Cache-Control "public, no-transform";
+    }
+}

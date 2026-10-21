@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS 3-Tier Demo (Web - WAS - DB)</title>
+  <meta name="description" content="Ứng dụng demo kiến trúc 3 tầng Web - WAS - Database cực nhẹ chạy trên AWS EC2 và RDS PostgreSQL">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Effects -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header -->
+  <header class="header-container" id="main-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">AWS 3-Tier Demo</h1>
+        <p class="brand-subtitle">Web Tier &bull; WAS Tier &bull; RDS PostgreSQL</p>
+      </div>
+    </div>
+
+    <!-- Status Badges & Quick Config -->
+    <div class="header-actions">
+      <div class="status-pill" id="status-pill" title="Trạng thái kết nối">
+        <span class="status-dot status-unknown" id="status-dot"></span>
+        <span class="status-text" id="status-text">Đang kiểm tra WAS...</span>
+      </div>
+
+      <button id="btn-open-config" class="btn btn-secondary btn-icon" title="Cài đặt kết nối WAS">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Cấu hình WAS</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    <!-- Architecture Diagram Bar -->
+    <section class="arch-bar" id="arch-overview">
+      <div class="arch-step">
+        <span class="step-num">1</span>
+        <div class="step-info">
+          <strong>Web Tier</strong>
+          <small>EC2 Nginx / Static</small>
+        </div>
+      </div>
+      <div class="arch-arrow">&rarr;</div>
+      <div class="arch-step">
+        <span class="step-num">2</span>
+        <div class="step-info">
+          <strong>WAS Tier</strong>
+          <small id="was-ip-label">Node.js :5000</small>
+        </div>
+      </div>
+      <div class="arch-arrow">&rarr;</div>
+      <div class="arch-step">
+        <span class="step-num">3</span>
+        <div class="step-info">
+          <strong>DB Tier</strong>
+          <small>PostgreSQL RDS :5432</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Create Card Section -->
+    <section class="card form-card" id="create-section">
+      <div class="card-header">
+        <div class="header-icon-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
+        <div>
+          <h2 class="card-title">Thêm Bản Ghi Mới</h2>
+          <p class="card-desc">Gửi thao tác CREATE qua WAS API và lưu vào RDS PostgreSQL</p>
+        </div>
+      </div>
+
+      <form id="create-form" class="crud-form">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="input-title">Tiêu đề (Title) <span class="required">*</span></label>
+            <input type="text" id="input-title" placeholder="Ví dụ: Kiểm tra kết nối EC2 -> RDS" required autocomplete="off">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-content">Nội dung (Content)</label>
+          <textarea id="input-content" rows="2" placeholder="Nhập ghi chú hoặc mô tả dữ liệu demo..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="btn-submit-create" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span>Thêm Bản Ghi</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- List Section -->
+    <section class="card list-card" id="list-section">
+      <div class="list-toolbar">
+        <div class="toolbar-title-wrap">
+          <h2 class="card-title">Danh Sách Dữ Liệu</h2>
+          <span class="count-badge" id="items-count">0 bản ghi</span>
+        </div>
+
+        <div class="toolbar-actions">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="input-search" placeholder="Tìm kiếm bản ghi...">
+          </div>
+
+          <button id="btn-refresh" class="btn btn-secondary btn-icon" title="Tải lại danh sách">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Làm mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Items Grid / List -->
+      <div id="items-container" class="items-grid">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- Empty state -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">📂</div>
+        <h3>Chưa có bản ghi nào trong Database</h3>
+        <p>Hãy dùng form bên trên để thêm bản ghi đầu tiên vào PostgreSQL RDS.</p>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div id="loading-state" class="loading-state">
+        <div class="spinner"></div>
+        <p>Đang tải dữ liệu từ WAS...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Cập Nhật Bản Ghi</h3>
+        <button id="btn-close-edit" class="btn-close">&times;</button>
+      </div>
+
+      <form id="edit-form" class="crud-form">
+        <input type="hidden" id="edit-item-id">
+        <div class="form-group">
+          <label for="edit-title">Tiêu đề <span class="required">*</span></label>
+          <input type="text" id="edit-title" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="edit-content">Nội dung</label>
+          <textarea id="edit-content" rows="3"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-edit" class="btn btn-secondary">Hủy bỏ</button>
+          <button type="submit" id="btn-save-edit" class="btn btn-primary">Lưu Thay Đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WAS Configuration Modal -->
+  <div id="config-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Cấu Hình Kết Nối WAS</h3>
+        <button id="btn-close-config" class="btn-close">&times;</button>
+      </div>
+
+      <div class="config-modal-body">
+        <p class="config-hint">
+          Nhập địa chỉ IP / Domain và port của máy EC2 WAS (Backend).<br>
+          Ví dụ: <code>http://54.255.xx.xx:5000</code> hoặc <code>http://was.internal:5000</code>
+        </p>
+
+        <div class="form-group">
+          <label for="config-was-url">URL WAS API Backend:</label>
+          <input type="text" id="config-was-url" placeholder="http://13.212.x.x:5000">
+        </div>
+
+        <div id="health-test-output" class="health-box hidden">
+          <!-- Kết quả test WAS & DB -->
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-test-connection" class="btn btn-secondary">
+            <span>Kiểm tra kết nối</span>
+          </button>
+          <button type="button" id="btn-save-config" class="btn btn-primary">
+            <span>Lưu & Áp Dụng</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
