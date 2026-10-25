@@ -126,6 +126,20 @@ async function initDatabase() {
   }
 }
 
+// 0. Root endpoint kiểm tra nhanh khi curl hoặc ping
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    tier: 'WAS (Backend)',
+    message: 'WAS Backend API đang hoạt động bình thường',
+    endpoints: {
+      health: '/health',
+      healthz: '/healthz',
+      items: '/api/items'
+    }
+  });
+});
+
 // 1. Health check endpoints cho AWS Load Balancer (ALB / NLB / Target Group)
 // Endpoint siêu nhẹ trả về HTTP 200 ngay lập tức, không tốn query DB (khuyên dùng cho ALB Target Group Health Check Path: /healthz hoặc /ping)
 app.get(['/healthz', '/ping'], (req, res) => {
