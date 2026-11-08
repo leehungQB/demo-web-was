@@ -19,6 +19,10 @@
 | `DB_NAME` | Không | `postgres` | `postgres` | Tên database mặc định. |
 | `DB_SSL` | Không | `true` (khi dùng RDS) | `true` | Bật/tắt chế độ mã hóa SSL khi kết nối DB. |
 | `DB_CA_CERT_PATH` | Không | `key-rds/global-bundle.pem` | `/duong/dan/toi/chung_chi.pem` | Đường dẫn tùy chỉnh tới file chứng chỉ CA gốc của RDS. |
+| `S3_BUCKET` | Khuyên dùng | *(rỗng)* | `my-vpc-endpoint-lab-bucket` | Tên S3 Bucket phục vụ bài lab S3 VPC Endpoint (có thể đổi trực tiếp trên Web UI). |
+| `AWS_REGION` | Không | `ap-southeast-1` | `ap-southeast-1` | Region của S3 Bucket và VPC Endpoint. |
+| `S3_ENDPOINT_URL` | Không | *(rỗng)* | `https://bucket.vpce-xxx.s3...` | Custom Endpoint URL nếu dùng S3 Interface Endpoint mà không bật Private DNS. |
+| `S3_FORCE_PATH_STYLE` | Không | `false` | `false` | Bật Path-style addressing cho S3 client khi cần. |
 
 ### 1.2. Tầng Web (Frontend Server - `web/.env`)
 

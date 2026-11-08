@@ -41,9 +41,9 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  // Chuẩn hóa đường dẫn
-  let safePath = path.normalize(req.url.split('?')[0]);
-  if (safePath === '/' || safePath === '\\') {
+  // Chuẩn hóa đường dẫn (đảm bảo dùng dấu '/' trên cả Linux và Windows)
+  let safePath = path.normalize(req.url.split('?')[0]).replace(/\\/g, '/');
+  if (safePath === '/' || safePath === '') {
     safePath = '/index.html';
   }
 

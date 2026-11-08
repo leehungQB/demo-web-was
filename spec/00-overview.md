@@ -33,13 +33,16 @@ Dự án hiện đã hoàn thiện giai đoạn **Core Functional Implementation
 
 ### ✅ Những gì dự án ĐANG CÓ (Implemented Features):
 1. **Tầng Web (Frontend)**:
-   - Giao diện web hoàn chỉnh 1 trang (Single Page Dashboard) hỗ trợ: Thêm mới, Sửa, Xóa, Tìm kiếm/Lọc bản ghi `items`.
-   - Bảng trạng thái sức khỏe (Healthcheck status) hiển thị trực tiếp tình trạng kết nối tới WAS và Database ngay trên giao diện người dùng.
+   - Giao diện web hoàn chỉnh chia 2 Tab Lab trực quan:
+     - **Lab 1 (RDS PostgreSQL)**: Thêm mới, Sửa, Xóa, Tìm kiếm/Lọc bản ghi `items`.
+     - **Lab 2 (Amazon S3 VPC Endpoint Explorer)**: Hiển thị cây thư mục S3 (`S3 Tree View`), điều hướng Breadcrumb, Tạo thư mục mới, Tạo file văn bản/cấu hình, Xem & Sửa nội dung file trực tiếp trên S3, Upload file từ máy tính, Tải file về và Xóa file/thư mục.
+   - Bảng trạng thái sức khỏe (Healthcheck & VPC Endpoint Diagnostics) hiển thị trực tiếp tình trạng kết nối tới WAS, Database RDS và **Amazon S3 (kèm IP phân giải DNS để phân biệt Gateway VPC Endpoint và Interface VPC Endpoint)**.
    - Máy chủ `server.js` thuần tự động phục vụ file tĩnh và đóng vai trò **Reverse Proxy** chuyển hướng `/api/*` và `/health*` sang IP nội bộ của WAS.
    - Khởi tạo cấu hình động qua endpoint `/config.js` dựa theo biến môi trường `WAS_API_URL`.
 
 2. **Tầng WAS (Backend API)**:
-   - Các API chuẩn RESTful cho bảng dữ liệu `items`.
+   - Các API chuẩn RESTful cho bảng dữ liệu `items` (PostgreSQL RDS).
+   - Bộ API đầy đủ cho **Amazon S3 (`/api/s3/*`)** sử dụng `@aws-sdk/client-s3`: Hỗ trợ tự động nhận **IAM Role gắn trên EC2 WAS (IMDSv2)** hoặc Access Key, hỗ trợ cả **S3 Gateway VPC Endpoint** lẫn **S3 Interface VPC Endpoint (PrivateLink)**.
    - Cơ chế tự khởi tạo cơ sở dữ liệu (`initDatabase`): Tự động tạo bảng `items` trên PostgreSQL khi backend khởi động nếu chưa tồn tại bảng.
    - Endpoint `/healthz` (hoặc `/ping`) trả về HTTP `200 OK` tức thì mà không truy vấn DB, chuyên dụng cho **AWS ALB Target Group Health Check**.
    - Endpoint `/health` kiểm tra toàn diện trạng thái sống của cả WAS và câu lệnh `SELECT NOW()` tới RDS.

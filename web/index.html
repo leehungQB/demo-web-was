@@ -26,17 +26,31 @@
         </svg>
       </div>
       <div>
-        <h1 class="brand-title">AWS 3-Tier Demo</h1>
-        <p class="brand-subtitle">Web Tier &bull; WAS Tier &bull; RDS PostgreSQL</p>
+        <h1 class="brand-title">AWS 3-Tier &amp; VPC Endpoint Lab</h1>
+        <p class="brand-subtitle">Web Tier &bull; WAS Tier &bull; RDS PostgreSQL &amp; Amazon S3</p>
       </div>
     </div>
 
     <!-- Status Badges & Quick Config -->
     <div class="header-actions">
-      <div class="status-pill" id="status-pill" title="Trạng thái kết nối">
+      <div class="status-pill" id="status-pill" title="Trạng thái kết nối WAS & RDS">
         <span class="status-dot status-unknown" id="status-dot"></span>
         <span class="status-text" id="status-text">Đang kiểm tra WAS...</span>
       </div>
+
+      <div class="status-pill status-pill-clickable" id="s3-status-pill" title="Trạng thái kết nối S3 qua VPC Endpoint (Bấm để cấu hình)">
+        <span class="status-dot status-unknown" id="s3-status-dot"></span>
+        <span class="status-text" id="s3-status-text">S3: Chưa kiểm tra</span>
+      </div>
+
+      <button id="btn-open-s3-config" class="btn btn-secondary btn-icon" title="Cấu hình Amazon S3 & VPC Endpoint">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <span>Cấu hình S3</span>
+      </button>
 
       <button id="btn-open-config" class="btn btn-secondary btn-icon" title="Cài đặt kết nối WAS">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -50,6 +64,24 @@
 
   <!-- Main Container -->
   <main class="main-container">
+    <!-- Lab Mode Switcher Tabs -->
+    <nav class="lab-tabs" aria-label="Chế độ bài Lab">
+      <button type="button" id="tab-btn-rds" class="lab-tab-btn active">
+        <span class="tab-icon">🗄️</span>
+        <div class="tab-label-group">
+          <strong>Lab 1: RDS PostgreSQL</strong>
+          <small>CRUD Database Tier (Port 5432)</small>
+        </div>
+      </button>
+      <button type="button" id="tab-btn-s3" class="lab-tab-btn">
+        <span class="tab-icon">🪣</span>
+        <div class="tab-label-group">
+          <strong>Lab 2: Amazon S3 (VPC Endpoint)</strong>
+          <small>S3 Tree Explorer &amp; CRUD qua Private Subnet</small>
+        </div>
+      </button>
+    </nav>
+
     <!-- Architecture Diagram Bar -->
     <section class="arch-bar" id="arch-overview">
       <div class="arch-step">
@@ -68,15 +100,24 @@
         </div>
       </div>
       <div class="arch-arrow">&rarr;</div>
-      <div class="arch-step">
+      <div class="arch-step" id="arch-step-3">
         <span class="step-num">3</span>
         <div class="step-info">
-          <strong>DB Tier</strong>
-          <small>PostgreSQL RDS :5432</small>
+          <strong id="arch-step-3-title">DB Tier</strong>
+          <small id="arch-step-3-desc">PostgreSQL RDS :5432</small>
+        </div>
+      </div>
+      <div class="arch-arrow hidden" id="arch-arrow-4">&rarr;</div>
+      <div class="arch-step hidden" id="arch-step-4">
+        <span class="step-num">4</span>
+        <div class="step-info">
+          <strong id="arch-step-4-title">Amazon S3</strong>
+          <small id="arch-step-4-desc">Bucket Storage</small>
         </div>
       </div>
     </section>
 
+    <div id="panel-rds" class="tab-panel">
     <!-- Create Card Section -->
     <section class="card form-card" id="create-section">
       <div class="card-header">
@@ -164,7 +205,291 @@
         <p>Đang tải dữ liệu từ WAS...</p>
       </div>
     </section>
+    </div>
+
+    <!-- ===================================================
+         TAB PANEL 2: AMAZON S3 VPC ENDPOINT EXPLORER
+         =================================================== -->
+    <div id="panel-s3" class="tab-panel hidden">
+      <!-- S3 VPC Endpoint Diagnostics Card -->
+      <section class="card s3-diag-card">
+        <div class="s3-diag-header">
+          <div class="s3-diag-title-group">
+            <div class="header-icon-box s3-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div>
+              <h2 class="card-title">Trạng Thái Kết Nối S3 &amp; VPC Endpoint</h2>
+              <p class="card-desc">Kiểm tra luồng kết nối từ EC2 WAS (Private Subnet) tới Amazon S3 qua Gateway / Interface VPC Endpoint</p>
+            </div>
+          </div>
+
+          <div class="s3-diag-actions">
+            <button type="button" id="btn-s3-check-now" class="btn btn-secondary btn-sm">
+              <span>🩺 Kiểm tra Endpoint</span>
+            </button>
+            <button type="button" id="btn-s3-open-cfg-inline" class="btn btn-primary btn-sm">
+              <span>⚙️ Đổi Bucket / VPC Endpoint</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="s3-diag-grid">
+          <div class="s3-diag-item">
+            <span class="diag-label">S3 Bucket &amp; Region</span>
+            <strong class="diag-value" id="s3-diag-bucket">Chưa cấu hình</strong>
+          </div>
+          <div class="s3-diag-item">
+            <span class="diag-label">Phương thức xác thực (WAS)</span>
+            <strong class="diag-value" id="s3-diag-auth">IAM Role / Default</strong>
+          </div>
+          <div class="s3-diag-item">
+            <span class="diag-label">DNS S3 Resolved IP (từ WAS)</span>
+            <strong class="diag-value mono" id="s3-diag-ip">---</strong>
+          </div>
+          <div class="s3-diag-item">
+            <span class="diag-label">Loại kết nối VPC Endpoint</span>
+            <strong class="diag-value" id="s3-diag-mode">Đang chờ kiểm tra...</strong>
+          </div>
+        </div>
+
+        <div id="s3-diag-error-banner" class="s3-error-banner hidden"></div>
+      </section>
+
+      <!-- S3 Explorer Main Workspace (Tree + Folder Content) -->
+      <section class="s3-explorer-grid">
+        <!-- Left Sidebar: S3 Tree View -->
+        <aside class="card s3-tree-card">
+          <div class="s3-tree-header">
+            <div>
+              <h3 class="s3-panel-title">🌲 S3 Tree View</h3>
+              <span class="s3-stats-sub" id="s3-tree-stats">0 thư mục &bull; 0 file</span>
+            </div>
+            <button type="button" id="btn-s3-expand-all" class="btn btn-secondary btn-xs" title="Mở rộng / Thu gọn toàn bộ cây">
+              Mở rộng
+            </button>
+          </div>
+
+          <div id="s3-tree-view" class="s3-tree-container">
+            <div class="s3-tree-placeholder">Chưa có dữ liệu cây thư mục</div>
+          </div>
+        </aside>
+
+        <!-- Right Content: Current Folder Objects & CRUD Actions -->
+        <div class="card s3-browser-card">
+          <!-- Toolbar: Breadcrumb & CRUD Buttons -->
+          <div class="s3-browser-toolbar">
+            <div class="s3-breadcrumb-bar" id="s3-breadcrumbs">
+              <button type="button" class="crumb-btn active">🪣 root /</button>
+            </div>
+
+            <div class="s3-crud-buttons">
+              <button type="button" id="btn-s3-create-folder" class="btn btn-secondary btn-sm" title="Tạo thư mục (prefix) mới trong đường dẫn hiện tại">
+                <span>📁 + Thư mục</span>
+              </button>
+              <button type="button" id="btn-s3-create-file" class="btn btn-secondary btn-sm" title="Tạo file văn bản / JSON / config mới trên S3">
+                <span>📝 + Tạo File</span>
+              </button>
+              <button type="button" id="btn-s3-upload" class="btn btn-primary btn-sm" title="Upload file từ máy tính lên S3">
+                <span>⬆️ Upload File</span>
+              </button>
+              <input type="file" id="s3-upload-input" class="hidden" multiple>
+              <button type="button" id="btn-s3-refresh" class="btn btn-secondary btn-sm" title="Tải lại cây thư mục S3">
+                <span>🔄</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter & Info Row -->
+          <div class="s3-filter-bar">
+            <div class="search-box s3-search-box">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="s3-filter-input" placeholder="Lọc nhanh tên file hoặc thư mục...">
+            </div>
+            <span class="s3-folder-meta" id="s3-folder-meta">Đang chọn: / (Root)</span>
+          </div>
+
+          <!-- Objects Table -->
+          <div class="s3-table-wrapper">
+            <table class="s3-table" id="s3-table">
+              <thead>
+                <tr>
+                  <th>Tên (Object / Prefix)</th>
+                  <th>Loại</th>
+                  <th>Kích thước</th>
+                  <th>Cập nhật cuối</th>
+                  <th style="text-align: right;">Thao tác (CRUD)</th>
+                </tr>
+              </thead>
+              <tbody id="s3-objects-tbody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State for S3 Folder -->
+          <div id="s3-empty-state" class="empty-state hidden">
+            <div class="empty-icon">🪣</div>
+            <h3 id="s3-empty-title">Thư mục S3 này đang trống</h3>
+            <p id="s3-empty-desc">Hãy bấm <strong>"+ Thư mục"</strong>, <strong>"+ Tạo File"</strong> hoặc <strong>"Upload File"</strong> để thêm dữ liệu lên S3 qua VPC Endpoint.</p>
+          </div>
+
+          <!-- Loading State for S3 -->
+          <div id="s3-loading-state" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p>Đang truy vấn S3 qua WAS &amp; VPC Endpoint...</p>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
+
+  <!-- S3 Configuration & VPC Endpoint Modal -->
+  <div id="s3-config-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">🪣 Cấu Hình Amazon S3 &amp; VPC Endpoint</h3>
+        <button id="btn-close-s3-config" class="btn-close">&times;</button>
+      </div>
+
+      <div class="config-modal-body">
+        <p class="config-hint">
+          <strong>Hướng dẫn Lab S3 VPC Endpoint:</strong><br>
+          &bull; <strong>Gateway VPC Endpoint:</strong> Để trống ô <em>Custom Endpoint URL</em>. AWS Route Table sẽ tự định tuyến lưu lượng S3 qua Prefix List (<code>pl-xxxxxx</code>).<br>
+          &bull; <strong>Interface VPC Endpoint (PrivateLink):</strong> Nếu bật <em>Private DNS</em> thì để trống; nếu tắt <em>Private DNS</em> thì nhập URL dạng <code>https://bucket.vpce-xxx.s3.ap-southeast-1.vpce.amazonaws.com</code>.
+        </p>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="s3-cfg-bucket">Tên S3 Bucket (S3_BUCKET) <span class="required">*</span></label>
+            <div style="display: flex; gap: 0.45rem;">
+              <input type="text" id="s3-cfg-bucket" placeholder="Ví dụ: lab-vpc-endpoint-s3-bucket" autocomplete="off">
+              <button type="button" id="btn-s3-use-demo" class="btn btn-secondary btn-xs" style="white-space: nowrap;" title="Sử dụng Bucket giả lập có sẵn dữ liệu mẫu để test giao diện">
+                🧪 Demo mẫu
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="s3-cfg-region">AWS Region (AWS_REGION) <span class="required">*</span></label>
+            <input type="text" id="s3-cfg-region" placeholder="ap-southeast-1" value="ap-southeast-1" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 0.9rem;">
+          <label for="s3-cfg-endpoint">Custom VPC Endpoint URL (Tùy chọn - Dùng cho Interface Endpoint không bật Private DNS):</label>
+          <input type="text" id="s3-cfg-endpoint" placeholder="Để trống nếu dùng Gateway Endpoint hoặc mặc định AWS S3" autocomplete="off">
+        </div>
+
+        <div class="form-group checkbox-row" style="margin-top: 0.6rem;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="s3-cfg-path-style">
+            <span>Bật <code>forcePathStyle: true</code> (Dùng khi gọi qua một số Custom Endpoint / MinIO / VPCE đặc thù)</span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-top: 0.9rem;">
+          <label for="s3-cfg-auth-mode">Phương thức xác thực trên máy WAS:</label>
+          <select id="s3-cfg-auth-mode" class="form-select">
+            <option value="iam_role">Dùng IAM Role gắn trên EC2 WAS / Default Env (Khuyên dùng cho bài Lab)</option>
+            <option value="static_keys">Nhập AWS Access Key &amp; Secret Key thủ công</option>
+          </select>
+        </div>
+
+        <div id="s3-static-keys-box" class="form-grid-2 hidden" style="margin-top: 0.9rem;">
+          <div class="form-group">
+            <label for="s3-cfg-access-key">AWS Access Key ID</label>
+            <input type="text" id="s3-cfg-access-key" placeholder="AKIA..." autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="s3-cfg-secret-key">AWS Secret Access Key</label>
+            <input type="password" id="s3-cfg-secret-key" placeholder="Nhập Secret Key mới..." autocomplete="off">
+          </div>
+        </div>
+
+        <div id="s3-test-output" class="health-box hidden"></div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-s3-test-conn" class="btn btn-secondary">
+            <span>🩺 Kiểm tra kết nối S3</span>
+          </button>
+          <button type="button" id="btn-s3-save-config" class="btn btn-primary">
+            <span>💾 Lưu &amp; Tải S3 Tree</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S3 Create Folder Modal -->
+  <div id="s3-folder-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">📁 Tạo Thư Mục S3 Mới</h3>
+        <button id="btn-close-s3-folder" class="btn-close">&times;</button>
+      </div>
+
+      <form id="s3-folder-form" class="crud-form">
+        <div class="form-group">
+          <label for="s3-folder-path-input">Đường dẫn thư mục (S3 Prefix) <span class="required">*</span></label>
+          <input type="text" id="s3-folder-path-input" placeholder="Ví dụ: logs/2026/ hoặc backup/" required autocomplete="off">
+          <small class="input-help">Hệ thống tự động thêm dấu <code>/</code> ở cuối để tạo Folder Marker trên S3.</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-s3-folder" class="btn btn-secondary">Hủy bỏ</button>
+          <button type="submit" id="btn-submit-s3-folder" class="btn btn-primary">Tạo Thư Mục</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- S3 Create / View / Edit File Modal -->
+  <div id="s3-file-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="s3-file-modal-title">📝 Tạo / Chỉnh Sửa File Trên S3</h3>
+        <button id="btn-close-s3-file" class="btn-close">&times;</button>
+      </div>
+
+      <form id="s3-file-form" class="crud-form">
+        <input type="hidden" id="s3-file-old-key">
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="s3-file-key-input">Đường dẫn Object Key trên S3 <span class="required">*</span></label>
+            <input type="text" id="s3-file-key-input" placeholder="Ví dụ: configs/app.json hoặc readme.txt" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="s3-file-type-input">Content-Type</label>
+            <input type="text" id="s3-file-type-input" placeholder="text/plain; charset=utf-8" autocomplete="off">
+          </div>
+        </div>
+
+        <div id="s3-text-editor-wrap" class="form-group">
+          <label for="s3-file-content-input">Nội dung File (Có thể sửa trực tiếp và lưu đè lên S3)</label>
+          <textarea id="s3-file-content-input" class="code-textarea" rows="11" placeholder="Nhập nội dung văn bản, JSON, YAML, script hoặc log tại đây..."></textarea>
+        </div>
+
+        <div id="s3-binary-preview-wrap" class="s3-binary-preview hidden"></div>
+
+        <div class="modal-footer s3-file-modal-footer">
+          <button type="button" id="btn-s3-download-modal" class="btn btn-secondary hidden">
+            <span>⬇️ Tải file xuống</span>
+          </button>
+          <div style="display: flex; gap: 0.7rem; margin-left: auto;">
+            <button type="button" id="btn-cancel-s3-file" class="btn btn-secondary">Đóng</button>
+            <button type="submit" id="btn-save-s3-file" class="btn btn-primary">💾 Lưu Lên S3</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Edit Modal -->
   <div id="edit-modal" class="modal-overlay hidden">

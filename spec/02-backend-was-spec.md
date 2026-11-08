@@ -140,6 +140,24 @@
 
 ---
 
+### 2.3. Nhóm API Amazon S3 & VPC Endpoint (`/api/s3/*`)
+
+| Phương thức | Đường dẫn | Mục đích |
+| :--- | :--- | :--- |
+| `GET` | `/api/s3/config` | Lấy cấu hình S3 hiện tại trên WAS (`bucket`, `region`, `endpointUrl`, `authMode`). |
+| `POST` | `/api/s3/config` | Cập nhật nóng cấu hình S3 Bucket, Region, Custom VPC Endpoint URL hoặc Credentials. |
+| `GET` | `/api/s3/health` | Kiểm tra kết nối từ WAS tới S3 qua VPC Endpoint, trả về DNS Resolved IP và độ trễ (ms). |
+| `POST` | `/api/s3/test` | Kiểm tra thử nghiệm cấu hình S3 trước khi lưu. |
+| `GET` | `/api/s3/tree` | Trả về cấu trúc cây thư mục (`tree`) toàn bộ Bucket và danh sách `folders`/`files` theo `prefix`. |
+| `POST` | `/api/s3/folder` | Tạo thư mục (prefix kết thúc bằng `/`) trên S3. |
+| `GET` | `/api/s3/object` | Đọc nội dung/xem trước file trên S3 hoặc tải file về máy (`?key=...&download=1`). |
+| `POST` | `/api/s3/object` | Tạo file văn bản/cấu hình mới trực tiếp trên S3. |
+| `PUT` | `/api/s3/object` | Sửa nội dung file hoặc đổi tên/di chuyển (`oldKey` -> `key`) trên S3. |
+| `POST` | `/api/s3/upload` | Upload file từ máy tính (Base64 payload) lên nhánh thư mục S3. |
+| `DELETE` | `/api/s3/object` | Xóa 1 file đơn lẻ hoặc xóa đệ quy toàn bộ thư mục (`prefix/`) trên S3. |
+
+---
+
 ## 3. Cấu Trúc Bảng Dữ Liệu (Database Schema)
 
 Cơ sở dữ liệu lưu trữ tại Amazon RDS PostgreSQL. Mã nguồn WAS tích hợp hàm `initDatabase()` tự động chạy câu lệnh DDL sau khi khởi động:
