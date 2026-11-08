@@ -34,6 +34,13 @@ Hệ thống ứng dụng demo chuẩn kiến trúc 3 tầng (**3-Tier Architect
 
 ```
 app-web-was/
+├── spec/                    # 📚 Tài liệu đặc tả kỹ thuật chi tiết (Chuẩn cho AI Models & Engineers)
+│   ├── README.md            # Index và chỉ dẫn đọc đặc tả
+│   ├── 00-overview.md       # Tổng quan dự án, hiện trạng & roadmap
+│   ├── 01-architecture-and-flow.md # Kiến trúc VPC, luồng dữ liệu & Reverse Proxy
+│   ├── 02-backend-was-spec.md  # Đặc tả REST API, RDS SSL, Schema DB
+│   ├── 03-frontend-web-spec.md # Đặc tả Web, Zero-dependency, Dynamic Config
+│   └── 04-operations-and-env.md # Biến môi trường mẫu, scripts, logging
 ├── web/                     # 🌐 Folder triển khai trên máy EC2 Web
 │   ├── index.html           # Giao diện 1 màn hình: Thêm, Sửa, Xóa, Lọc, Healthcheck
 │   ├── style.css            # Giao diện hiện đại (Dark Glassmorphism, Responsive)
