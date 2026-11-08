@@ -11,13 +11,15 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # Reverse proxy đến WAS Private IP (Ẩn port 5000 và bảo mật mạng nội bộ):
+    # Reverse proxy đến WAS (Có thể dùng IP Private của EC2 WAS hoặc DNS của Internal ALB/NLB):
+    # Ví dụ dùng Internal ALB: proxy_pass http://internal-was-alb-xxx.ap-southeast-1.elb.amazonaws.com/api/;
     location /api/ {
         proxy_pass http://10.0.27.74:5000/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 25M;
     }
 
     location /health {

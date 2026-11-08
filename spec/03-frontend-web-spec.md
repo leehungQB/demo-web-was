@@ -16,10 +16,10 @@
 
 | Tệp tin | Vai trò |
 | :--- | :--- |
-| `web/index.html` | Cấu trúc giao diện người dùng đơn trang (Single Page Application - SPA), bao gồm thanh thông báo trạng thái kết nối, form nhập liệu, ô tìm kiếm và bảng hiển thị danh sách bản ghi. |
-| `web/style.css` | Phong cách thiết kế hiện đại (Dark Glassmorphism, hiệu ứng blur, gradient, responsive đa kích thước màn hình). |
-| `web/app.js` | Logic client: Khởi chạy polling kiểm tra sức khỏe hệ thống, thực hiện các cuộc gọi `fetch()` để lấy danh sách, tạo mới, sửa và xóa bản ghi, tự động điều hướng giữa chế độ proxy và trực tiếp. |
-| `web/server.js` | Máy chủ HTTP Node.js: Phục vụ các tài nguyên tĩnh với MIME type chính xác, sinh tệp `/config.js` động và thực hiện Reverse Proxy. |
+| `web/index.html` | Giao diện SPA chia 2 Tab Lab: **Lab 1 (RDS PostgreSQL)** và **Lab 2 (Amazon S3 VPC Endpoint Explorer)** kèm các Modal cấu hình WAS, cấu hình S3 và trình soạn thảo file S3. |
+| `web/style.css` | Phong cách thiết kế hiện đại (Dark Glassmorphism, bố cục 2 cột cho S3 Tree View & Object Browser, responsive). |
+| `web/app.js` | Logic client: Chuyển đổi Tab, kiểm tra sức khỏe RDS & S3 VPC Endpoint, hiển thị cây thư mục S3 đệ quy, breadcrumb và thực hiện các thao tác CRUD trên cả RDS lẫn S3. |
+| `web/server.js` | Máy chủ HTTP Node.js: Phục vụ tài nguyên tĩnh, cung cấp `/web-healthz` cho External ALB, sinh `/config.js` động và thực hiện Reverse Proxy tới `WAS_API_URL` (IP Private hoặc Internal ALB). |
 | `web/nginx.conf.example` | File cấu hình tham khảo khi người dùng muốn sử dụng Nginx thay thế cho `web/server.js`. |
 
 ---

@@ -10,11 +10,13 @@
   function isPrivateIpUrl(url) {
     try {
       const parsed = new URL(url);
-      const host = parsed.hostname;
+      const host = parsed.hostname.toLowerCase();
       if (host === 'localhost' || host === '127.0.0.1') return false;
       if (host.startsWith('10.')) return true;
       if (host.startsWith('192.168.')) return true;
       if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) return true;
+      if (host.startsWith('internal-') && host.includes('.elb.amazonaws.com')) return true;
+      if (host.endsWith('.internal')) return true;
       return false;
     } catch {
       return false;
@@ -414,10 +416,10 @@
     } else {
       healthTestOutput.className = 'health-box error';
       let hint = '👉 Kiểm tra lại Security Group port 5000 và tiến trình Node trên EC2 WAS.';
-      if (testUrl.includes('10.') || testUrl.includes('172.') || testUrl.includes('192.168.')) {
-        hint = `⚠️ <strong>Phát hiện IP nội bộ (${testUrl}):</strong><br>` +
-          `Trình duyệt trên máy tính cá nhân KHÔNG THỂ gọi trực tiếp vào IP Private của AWS.<br>` +
-          `👉 Hãy bấm nút <strong>"Dùng Web Proxy"</strong> để Web EC2 (${window.location.origin}) chuyển tiếp yêu cầu đến WAS.`;
+      if (testUrl.includes('10.') || testUrl.includes('172.') || testUrl.includes('192.168.') || testUrl.includes('internal-')) {
+        hint = `⚠️ <strong>Phát hiện địa chỉ nội bộ VPC (${testUrl}):</strong><br>` +
+          `Trình duyệt trên máy tính cá nhân KHÔNG THỂ gọi trực tiếp vào IP Private hoặc Internal ALB của AWS.<br>` +
+          `👉 Hãy cấu hình địa chỉ này vào biến <code>WAS_API_URL</code> trong file <code>web/.env</code> trên máy EC2 Web, sau đó bấm nút <strong>"Dùng Web Proxy"</strong> tại đây!`;
       }
       healthTestOutput.innerHTML = `❌ KẾT NỐI THẤT BẠI!<br>` +
         `Lỗi: ${result.error || result.message || 'Không thể liên lạc'}<br>${hint}`;

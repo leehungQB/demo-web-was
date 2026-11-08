@@ -67,17 +67,40 @@ window.APP_CONFIG = {
     return res.end(dynamicConfig);
   }
 
-  // 2. Reverse Proxy các API requests (/api/*, /health, /healthz) sang WAS Private IP
+  // 1.5. Health check riêng cho tầng Web (Dành cho External ALB / NLB Target Group trỏ vào EC2 Web)
+  if (safePath === '/web-healthz') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
+    return res.end(JSON.stringify({
+      status: 'OK',
+      tier: 'Web (Frontend)',
+      proxyEnabled: Boolean(process.env.WAS_API_URL),
+      wasTarget: process.env.WAS_API_URL || null,
+      uptime: Math.round(process.uptime()),
+      timestamp: new Date().toISOString()
+    }));
+  }
+
+  // 2. Reverse Proxy các API requests (/api/*, /health, /healthz) sang WAS (Private IP hoặc Internal ALB/NLB)
   const wasTargetUrl = process.env.WAS_API_URL;
   if (safePath.startsWith('/api/') || safePath === '/health' || safePath === '/healthz' || safePath === '/ping') {
     if (wasTargetUrl) {
       return proxyToWas(req, res, wasTargetUrl);
+    } else if (safePath === '/healthz' || safePath === '/ping') {
+      // Nếu chưa cấu hình WAS_API_URL, vẫn trả HTTP 200 cho ALB Health Check trên tầng Web
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
+      return res.end(JSON.stringify({
+        status: 'OK',
+        tier: 'Web (Frontend)',
+        proxyEnabled: false,
+        uptime: Math.round(process.uptime()),
+        timestamp: new Date().toISOString()
+      }));
     } else {
       res.writeHead(503, { 'Content-Type': 'application/json; charset=UTF-8' });
       return res.end(JSON.stringify({
         status: 'DOWN',
         success: false,
-        error: 'Web Server chưa được cấu hình biến môi trường WAS_API_URL trong file .env trên EC2 Web! Vui lòng thêm: WAS_API_URL=http://<WAS_PRIVATE_IP>:5000 vào file web/.env và khởi động lại server.'
+        error: 'Web Server chưa được cấu hình biến môi trường WAS_API_URL trong file .env trên EC2 Web! Vui lòng thêm WAS_API_URL=http://<WAS_IP_HOAC_INTERNAL_ALB_DNS>:5000 vào file web/.env và khởi động lại server.'
       }));
     }
   }
